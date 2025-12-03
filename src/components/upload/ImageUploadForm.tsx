@@ -93,6 +93,7 @@ export function ImageUploadForm({ user }: { user: User }) {
           const videoItem = await createVideoItem(batch.id, user.id, publicUrl);
 
           // Step 4: Request video generation via API endpoint
+          let operationId: string | undefined;
           try {
             const generateResponse = await fetch('/api/videos/generate', {
               method: 'POST',
@@ -105,7 +106,7 @@ export function ImageUploadForm({ user }: { user: User }) {
             }
 
             const veoResponse = await generateResponse.json();
-            const operationId = veoResponse.id;
+            operationId = veoResponse.id;
 
             // Step 5: Update operation ID
             await updateVideoItemOperationId(videoItem.id, operationId);
@@ -117,7 +118,7 @@ export function ImageUploadForm({ user }: { user: User }) {
               message: errorMessage,
               stack: runwayError instanceof Error ? runwayError.stack : undefined,
               videoItemId: videoItem.id,
-              operationId: veoResponse?.id,
+              operationId: operationId,
             });
             setError('영상 생성 요청에 실패했습니다. 다시 시도해주세요.');
           }

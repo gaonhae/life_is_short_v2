@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requestVideoGeneration } from '@/lib/api/runway';
+import { requestVideoGeneration } from '@/lib/api/veo';
 
 export async function POST(request: NextRequest) {
   try {

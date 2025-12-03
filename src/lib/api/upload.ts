@@ -62,13 +62,13 @@ export async function createVideoItem(batchId: string, userId: string, sourceIma
   return data;
 }
 
-export async function updateVideoItemTaskId(videoItemId: string, taskId: string) {
+export async function updateVideoItemOperationId(videoItemId: string, operationId: string) {
   const { error } = await supabase
     .from('video_items')
-    .update({ runway_task_id: taskId })
+    .update({ veo_operation_id: operationId })
     .eq('id', videoItemId);
 
   if (error) {
-    throw new Error(`Task ID 업데이트 실패: ${error.message}`);
+    throw new Error(`Operation ID 업데이트 실패: ${error.message}`);
   }
 }

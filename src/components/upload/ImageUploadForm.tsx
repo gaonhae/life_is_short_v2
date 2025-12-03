@@ -8,7 +8,7 @@ import {
   uploadImage,
   createVideoBatch,
   createVideoItem,
-  updateVideoItemTaskId,
+  updateVideoItemOperationId,
 } from '@/lib/api/upload';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -104,11 +104,11 @@ export function ImageUploadForm({ user }: { user: User }) {
               throw new Error('Failed to request video generation');
             }
 
-            const runwayResponse = await generateResponse.json();
-            const taskId = runwayResponse.id;
+            const veoResponse = await generateResponse.json();
+            const operationId = veoResponse.id;
 
-            // Step 5: Update task ID
-            await updateVideoItemTaskId(videoItem.id, taskId);
+            // Step 5: Update operation ID
+            await updateVideoItemOperationId(videoItem.id, operationId);
           } catch (runwayError) {
             console.error('Failed to request video generation:', runwayError);
             setError('영상 생성 요청에 실패했습니다. 다시 시도해주세요.');
@@ -140,7 +140,7 @@ export function ImageUploadForm({ user }: { user: User }) {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">사진을 업로드하세요</h2>
         <p className="text-gray-600 mb-8">
           {MIN_IMAGES}장 이상 {MAX_IMAGES}장 이하의 JPG 또는 PNG 이미지를 선택해주세요. 각 사진은{' '}
-          {3}초의 영상으로 변환됩니다.
+          {4}초의 영상으로 변환됩니다.
         </p>
 
         {error && (

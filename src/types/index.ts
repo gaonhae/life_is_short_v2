@@ -19,7 +19,7 @@ export interface VideoItem {
   user_id: string;
   source_image_url: string;
   generated_video_url: string | null;
-  runway_task_id: string | null;
+  veo_operation_id: string | null;
   status: ProcessingStatus;
   is_email_sent: boolean;
   created_at: string;
@@ -27,23 +27,31 @@ export interface VideoItem {
 }
 
 // API Request/Response types
-export interface RunwayGenerateRequest {
-  image_url: string;
-  duration: number;
+export interface VeoGenerateRequest {
+  imageUrl: string;
 }
 
-export interface RunwayTaskResponse {
-  id: string;
-  status: string;
-  output?: {
-    video_url: string;
-  }[];
+export interface VeoOperation {
+  name: string;  // "operations/{operation_id}"
+  done: boolean;
+  response?: {
+    generatedVideos: Array<{
+      video: {
+        uri: string;  // GCS URI
+      };
+    }>;
+  };
+  error?: {
+    code: number;
+    message: string;
+    details?: any[];
+  };
 }
 
-export interface WebhookPayload {
-  task_id: string;
-  status: string;
-  output_url?: string;
+export interface VeoStatusResponse {
+  done: boolean;
+  videoUrl: string | null;  // GCS URI
+  error: any | null;
 }
 
 // Form types

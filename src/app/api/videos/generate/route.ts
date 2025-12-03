@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requestVideoGeneration } from '@/lib/api/veo';
+import { updateVideoItemOperationIdServer } from '@/lib/api/upload';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,10 +16,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { imageUrl } = await request.json();
+    const { imageUrl, videoItemId } = await request.json();
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
+    }
+
+    if (!videoItemId) {
+      return NextResponse.json({ error: 'Video item ID is required' }, { status: 400 });
     }
 
     // Request video generation from Veo
@@ -26,8 +31,19 @@ export async function POST(request: NextRequest) {
     const result = await requestVideoGeneration(imageUrl);
 
     console.log('[Route] Result received from requestVideoGeneration:', JSON.stringify(result));
-    console.log('[Route] About to return NextResponse.json');
 
+    // Update operation ID in database using server instance (bypasses RLS)
+    console.log('[Route] Updating operation ID in database for videoItemId:', videoItemId);
+    try {
+      await updateVideoItemOperationIdServer(videoItemId, result.id);
+      console.log('[Route] Successfully updated operation ID in database');
+    } catch (dbError) {
+      console.error('[Route] Failed to update operation ID in database:', dbError);
+      // Don't return error here - Veo operation was successful
+      // Log it but continue
+    }
+
+    console.log('[Route] About to return NextResponse.json');
     return NextResponse.json(result);
   } catch (error) {
     console.error('Video generation error:', error);

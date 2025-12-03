@@ -8,7 +8,6 @@ import {
   uploadImage,
   createVideoBatch,
   createVideoItem,
-  updateVideoItemOperationId,
 } from '@/lib/api/upload';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -98,7 +97,7 @@ export function ImageUploadForm({ user }: { user: User }) {
             const generateResponse = await fetch('/api/videos/generate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageUrl: publicUrl }),
+              body: JSON.stringify({ imageUrl: publicUrl, videoItemId: videoItem.id }),
             });
 
             if (!generateResponse.ok) {
@@ -110,14 +109,7 @@ export function ImageUploadForm({ user }: { user: User }) {
             operationId = veoResponse.id;
             console.log('[ImageUploadForm] operationId extracted:', operationId);
 
-            // Step 5: Update operation ID
-            if (operationId) {
-              console.log('[ImageUploadForm] About to call updateVideoItemOperationId with:', { videoItemId: videoItem.id, operationId });
-              await updateVideoItemOperationId(videoItem.id, operationId);
-              console.log('[ImageUploadForm] Successfully updated operation ID in DB');
-            } else {
-              throw new Error('Operation ID not received from API');
-            }
+            // Note: updateVideoItemOperationId is now handled server-side in /api/videos/generate
           } catch (runwayError) {
             console.error('Failed to request video generation:', runwayError);
             const errorMessage = runwayError instanceof Error ? runwayError.message : String(runwayError);

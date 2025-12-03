@@ -111,6 +111,14 @@ export function ImageUploadForm({ user }: { user: User }) {
             await updateVideoItemOperationId(videoItem.id, operationId);
           } catch (runwayError) {
             console.error('Failed to request video generation:', runwayError);
+            const errorMessage = runwayError instanceof Error ? runwayError.message : String(runwayError);
+            console.error('[ImageUploadForm] Detailed error:', {
+              error: runwayError,
+              message: errorMessage,
+              stack: runwayError instanceof Error ? runwayError.stack : undefined,
+              videoItemId: videoItem.id,
+              operationId: veoResponse?.id,
+            });
             setError('영상 생성 요청에 실패했습니다. 다시 시도해주세요.');
           }
 

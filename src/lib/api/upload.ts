@@ -63,12 +63,22 @@ export async function createVideoItem(batchId: string, userId: string, sourceIma
 }
 
 export async function updateVideoItemOperationId(videoItemId: string, operationId: string) {
+  console.log('[updateVideoItemOperationId] Attempting to update:', { videoItemId, operationId });
+
   const { error } = await supabase
     .from('video_items')
     .update({ veo_operation_id: operationId })
     .eq('id', videoItemId);
 
   if (error) {
+    console.error('[updateVideoItemOperationId] Error details:', {
+      code: error.code,
+      message: error.message,
+      hint: (error as any).hint,
+      details: (error as any).details,
+    });
     throw new Error(`Operation ID 업데이트 실패: ${error.message}`);
   }
+
+  console.log('[updateVideoItemOperationId] Successfully updated');
 }

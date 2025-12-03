@@ -106,11 +106,15 @@ export function ImageUploadForm({ user }: { user: User }) {
             }
 
             const veoResponse = await generateResponse.json();
+            console.log('[ImageUploadForm] veoResponse received:', veoResponse);
             operationId = veoResponse.id;
+            console.log('[ImageUploadForm] operationId extracted:', operationId);
 
             // Step 5: Update operation ID
             if (operationId) {
+              console.log('[ImageUploadForm] About to call updateVideoItemOperationId with:', { videoItemId: videoItem.id, operationId });
               await updateVideoItemOperationId(videoItem.id, operationId);
+              console.log('[ImageUploadForm] Successfully updated operation ID in DB');
             } else {
               throw new Error('Operation ID not received from API');
             }

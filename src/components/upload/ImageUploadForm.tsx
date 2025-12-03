@@ -109,7 +109,11 @@ export function ImageUploadForm({ user }: { user: User }) {
             operationId = veoResponse.id;
 
             // Step 5: Update operation ID
-            await updateVideoItemOperationId(videoItem.id, operationId);
+            if (operationId) {
+              await updateVideoItemOperationId(videoItem.id, operationId);
+            } else {
+              throw new Error('Operation ID not received from API');
+            }
           } catch (runwayError) {
             console.error('Failed to request video generation:', runwayError);
             const errorMessage = runwayError instanceof Error ? runwayError.message : String(runwayError);

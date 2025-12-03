@@ -21,8 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
     }
 
-    // Request video generation from Runway
+    // Request video generation from Veo
+    console.log('[Route] Calling requestVideoGeneration with imageUrl:', imageUrl);
     const result = await requestVideoGeneration(imageUrl);
+
+    console.log('[Route] Result received from requestVideoGeneration:', JSON.stringify(result));
+    console.log('[Route] About to return NextResponse.json');
 
     return NextResponse.json(result);
   } catch (error) {

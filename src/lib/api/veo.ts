@@ -50,12 +50,27 @@ export async function requestVideoGeneration(imageUrl: string) {
     if (!operation.name) {
       throw new Error('Operation name is missing from the response');
     }
+
+    console.log('[Veo] Operation object full:', JSON.stringify({
+      name: operation.name,
+      done: operation.done,
+      hasResponse: !!operation.response,
+      hasError: !!operation.error,
+      keys: Object.keys(operation),
+    }, null, 2));
+
     const operationId = operation.name.split('/').pop() || operation.name;
 
-    return {
+    console.log('[Veo] Extracted operationId:', operationId);
+
+    const result = {
       id: operationId,
       operationName: operation.name,
     };
+
+    console.log('[Veo] About to return result:', JSON.stringify(result));
+
+    return result;
   } catch (error) {
     console.error('[Veo] Video generation request failed:', error);
     throw new Error(

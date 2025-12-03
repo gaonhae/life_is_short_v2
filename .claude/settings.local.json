@@ -16,7 +16,9 @@
       "Bash(git commit:*)",
       "Bash(curl:*)",
       "Bash(cat:*)",
-      "WebFetch(domain:upstash.com)"
+      "WebFetch(domain:upstash.com)",
+      "Bash(tree:*)",
+      "WebFetch(domain:tessl.io)"
     ],
     "deny": [],
     "ask": []

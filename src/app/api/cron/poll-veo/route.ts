@@ -2,20 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { checkOperationStatus } from '@/lib/api/veo';
 import { sendVideoCompletionEmail } from '@/lib/api/email';
-import { GoogleGenAI } from '@google/genai';
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const TIMEOUT_MINUTES = 10;
 
 if (!CRON_SECRET) {
   throw new Error('CRON_SECRET is not configured in environment variables');
 }
-if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not configured in environment variables');
-}
-
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export async function GET(request: NextRequest) {
   // 1. 인증 확인
@@ -117,10 +110,14 @@ export async function GET(request: NextRequest) {
             try {
               console.log('[Cron] Downloading video from GCS:', status.videoUrl);
 
-              // 5. GCS에서 비디오 다운로드
-              const videoBuffer = await ai.files.download({
-                file: { uri: status.videoUrl },
-              });
+              // 5. GCS에서 비디오 다운로드 (HTTP 직접 요청)
+              const response = await fetch(status.videoUrl);
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to download video: ${response.status} ${response.statusText}`
+                );
+              }
+              const videoBuffer = Buffer.from(await response.arrayBuffer());
 
               console.log('[Cron] Video downloaded, size:', videoBuffer.length, 'bytes');
 

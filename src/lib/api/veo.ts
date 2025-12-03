@@ -47,6 +47,9 @@ export async function requestVideoGeneration(imageUrl: string) {
     console.log('[Veo] Video generation started:', operation.name);
 
     // 5. operation ID 추출
+    if (!operation.name) {
+      throw new Error('Operation name is missing from the response');
+    }
     const operationId = operation.name.split('/').pop() || operation.name;
 
     return {
@@ -69,7 +72,7 @@ export async function requestVideoGeneration(imageUrl: string) {
 export async function checkOperationStatus(operationName: string) {
   try {
     const operation = await ai.operations.getVideosOperation({
-      operation: { name: operationName },
+      operation: { name: operationName } as any,
     });
 
     console.log('[Veo] Operation status:', {

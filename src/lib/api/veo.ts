@@ -36,7 +36,7 @@ export async function requestVideoGeneration(imageUrl: string) {
 
     // 4. Veo API 호출 (Google GenAI 라이브러리 사용)
     const operation = await ai.models.generateVideos({
-      model: 'veo-3.1-generate-preview',
+      model: 'veo-3.0-fast-generate-001',
       prompt: '', // 이미지만 사용
       image: {
         imageBytes: imageBytes.toString('base64'), // Base64 문자열로 변환

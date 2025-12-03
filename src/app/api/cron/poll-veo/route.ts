@@ -8,6 +8,13 @@ const CRON_SECRET = process.env.CRON_SECRET;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const TIMEOUT_MINUTES = 10;
 
+if (!CRON_SECRET) {
+  throw new Error('CRON_SECRET is not configured in environment variables');
+}
+if (!GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not configured in environment variables');
+}
+
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export async function GET(request: NextRequest) {
@@ -51,6 +58,11 @@ export async function GET(request: NextRequest) {
     );
 
     for (const item of timedOutItems) {
+      console.log('[Cron] Timeout detected:', {
+        id: item.id,
+        createdAt: item.created_at,
+        elapsedMinutes: Math.floor((now - new Date(item.created_at).getTime()) / 60000),
+      });
       await supabase
         .from('video_items')
         .update({ status: 'failed', updated_at: new Date().toISOString() })
@@ -59,9 +71,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. 나머지 항목들의 상태 확인 (병렬 처리)
-    const activeItems = pendingItems.filter(
-      (item) => now - new Date(item.created_at).getTime() <= timeoutThreshold
-    );
+    const activeItems = pendingItems
+      .filter((item) => now - new Date(item.created_at).getTime() <= timeoutThreshold)
+      .slice(0, 5); // Vercel 타임아웃 방지: 한 번에 최대 5개만 처리
 
     const statusChecks = activeItems.map(async (item) => {
       try {
@@ -72,13 +84,35 @@ export async function GET(request: NextRequest) {
 
         if (status.done) {
           if (status.error) {
-            // 실패
+            // 이미 failed 상태이면 건너뛰기 (Qstash 재시도 시 중복 방지)
+            const { data: currentItem } = await supabase
+              .from('video_items')
+              .select('status')
+              .eq('id', item.id)
+              .single();
+
+            if (currentItem?.status === 'failed') {
+              console.log('[Cron] Already failed, skipping:', item.id);
+              return;
+            }
+
             await supabase
               .from('video_items')
               .update({ status: 'failed', updated_at: new Date().toISOString() })
               .eq('id', item.id);
             results.failed++;
           } else if (status.videoUrl) {
+            // 이미 completed 상태이면 건너뛰기
+            const { data: currentItem } = await supabase
+              .from('video_items')
+              .select('status')
+              .eq('id', item.id)
+              .single();
+
+            if (currentItem?.status === 'completed') {
+              console.log('[Cron] Already completed, skipping:', item.id);
+              return;
+            }
             // 완료 - GCS에서 다운로드 후 Supabase에 업로드
             try {
               console.log('[Cron] Downloading video from GCS:', status.videoUrl);
@@ -91,8 +125,16 @@ export async function GET(request: NextRequest) {
               console.log('[Cron] Video downloaded, size:', videoBuffer.length, 'bytes');
 
               // 6. Supabase Storage에 업로드
-              const userId = (item.video_batches as any)?.user_id || item.user_id;
-              const fileName = `${userId}/${Date.now()}.mp4`;
+              const videoBatch = item.video_batches as { user_id: string } | null;
+              const userId = videoBatch?.user_id;
+
+              if (!userId) {
+                console.error('[Cron] Missing user_id for video item:', item.id);
+                results.errors.push(`${item.id}: Missing user_id`);
+                return;
+              }
+
+              const fileName = `${userId}/${Date.now()}-${item.id.slice(0, 8)}.mp4`;
 
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('generated-videos')
@@ -139,7 +181,10 @@ export async function GET(request: NextRequest) {
 
                 if (userEmail && userId) {
                   await sendVideoCompletionEmail(userEmail, userId);
-                  await supabase.from('video_items').update({ is_email_sent: true }).eq('id', item.id);
+                  await supabase
+                    .from('video_items')
+                    .update({ is_email_sent: true })
+                    .eq('id', item.id);
                   console.log('[Cron] Email sent to:', userEmail);
                 }
               } catch (emailError) {

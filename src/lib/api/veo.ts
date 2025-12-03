@@ -25,7 +25,7 @@ export async function requestVideoGeneration(imageUrl: string) {
       throw new Error(`Failed to fetch image: ${imageResponse.status}`);
     }
 
-    // 2. ArrayBuffer → Buffer 변환 (Base64 아님!)
+    // 2. ArrayBuffer → Buffer 변환 (이후 Base64 문자열로 변환)
     const arrayBuffer = await imageResponse.arrayBuffer();
     const imageBytes = Buffer.from(arrayBuffer);
 
@@ -39,7 +39,7 @@ export async function requestVideoGeneration(imageUrl: string) {
       model: 'veo-3.1-generate-preview',
       prompt: '', // 이미지만 사용
       image: {
-        imageBytes: imageBytes,  // ✅ Buffer 직접 전달 (Base64 아님)
+        imageBytes: imageBytes.toString('base64'), // Base64 문자열로 변환
         mimeType: mimeType,
       },
     });
@@ -95,7 +95,7 @@ export async function checkOperationStatus(operationName: string) {
 
       return {
         done: true,
-        videoUrl: videoUri,  // GCS URI (gs://bucket-name/path/to/video.mp4)
+        videoUrl: videoUri, // GCS URI (gs://bucket-name/path/to/video.mp4)
         error: null,
       };
     }

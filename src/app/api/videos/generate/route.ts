@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requestVideoGeneration } from '@/lib/api/veo';
-import { updateVideoItemOperationIdServer } from '@/lib/api/upload';
+import { updateVideoItemOperationIdServer } from '@/lib/api/upload-server';
 
 export async function POST(request: NextRequest) {
   try {

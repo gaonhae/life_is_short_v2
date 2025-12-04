@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, GenerateVideosOperation } from '@google/genai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -36,7 +36,7 @@ export async function requestVideoGeneration(imageUrl: string) {
 
     // 4. Veo API 호출 (Google GenAI 라이브러리 사용)
     const operation = await ai.models.generateVideos({
-      model: 'veo-3.0-fast-generate-001',
+      model: 'veo-3.0-generate-001',
       prompt: '', // 이미지만 사용
       image: {
         imageBytes: imageBytes.toString('base64'), // Base64 문자열로 변환
@@ -51,17 +51,25 @@ export async function requestVideoGeneration(imageUrl: string) {
       throw new Error('Operation name is missing from the response');
     }
 
-    console.log('[Veo] Operation object full:', JSON.stringify({
-      name: operation.name,
-      done: operation.done,
-      hasResponse: !!operation.response,
-      hasError: !!operation.error,
-      keys: Object.keys(operation),
-    }, null, 2));
+    console.log(
+      '[Veo] Operation object full:',
+      JSON.stringify(
+        {
+          name: operation.name,
+          done: operation.done,
+          hasResponse: !!operation.response,
+          hasError: !!operation.error,
+          keys: Object.keys(operation),
+        },
+        null,
+        2
+      )
+    );
 
-    const operationId = operation.name.split('/').pop() || operation.name;
+    // 전체 operation name을 ID로 사용 (예: "operations/uuid")
+    const operationId = operation.name;
 
-    console.log('[Veo] Extracted operationId:', operationId);
+    console.log('[Veo] Using full operation name as ID:', operationId);
 
     const result = {
       id: operationId,
@@ -86,8 +94,12 @@ export async function requestVideoGeneration(imageUrl: string) {
  */
 export async function checkOperationStatus(operationName: string) {
   try {
+    // GenerateVideosOperation 인스턴스 생성
+    const operationObj = new GenerateVideosOperation();
+    operationObj.name = operationName;
+
     const operation = await ai.operations.getVideosOperation({
-      operation: { name: operationName } as any,
+      operation: operationObj,
     });
 
     console.log('[Veo] Operation status:', {
@@ -109,11 +121,13 @@ export async function checkOperationStatus(operationName: string) {
     // 완료 확인
     if (operation.done && operation.response?.generatedVideos?.[0]?.video) {
       const videoUri = operation.response.generatedVideos[0].video.uri;
-      console.log('[Veo] Video generation completed:', videoUri);
+      // API 키를 URL에 추가하여 올바른 프로젝트로 접근
+      const videoUrlWithKey = `${videoUri}&key=${GEMINI_API_KEY}`;
+      console.log('[Veo] Video generation completed:', videoUrlWithKey);
 
       return {
         done: true,
-        videoUrl: videoUri, // GCS URI (gs://bucket-name/path/to/video.mp4)
+        videoUrl: videoUrlWithKey,
         error: null,
       };
     }

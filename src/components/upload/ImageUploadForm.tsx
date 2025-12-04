@@ -4,11 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
-import {
-  uploadImage,
-  createVideoBatch,
-  createVideoItem,
-} from '@/lib/api/upload';
+import { uploadImage, createVideoBatch, createVideoItem } from '@/lib/api/upload-client';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
@@ -112,7 +108,8 @@ export function ImageUploadForm({ user }: { user: User }) {
             // Note: updateVideoItemOperationId is now handled server-side in /api/videos/generate
           } catch (runwayError) {
             console.error('Failed to request video generation:', runwayError);
-            const errorMessage = runwayError instanceof Error ? runwayError.message : String(runwayError);
+            const errorMessage =
+              runwayError instanceof Error ? runwayError.message : String(runwayError);
             console.error('[ImageUploadForm] Detailed error:', {
               error: runwayError,
               message: errorMessage,
